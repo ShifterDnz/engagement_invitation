@@ -1,141 +1,236 @@
 <!DOCTYPE html>
 <html lang="tr">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Özdenur & M.Baran Nişan Etkinliği</title>
-  <style>
-    body {
-      font-family: 'Arial', sans-serif;
-      background: url('https://i.imgur.com/your-soft-background.jpg') no-repeat center center fixed;
-      background-size: cover;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      min-height: 100vh;
-      margin: 0;
-    }
-    .container {
-      background-color: rgba(255,255,255,0.95);
-      padding: 30px;
-      border-radius: 12px;
-      text-align: center;
-      width: 90%;
-      max-width: 500px;
-      box-shadow: 0 0 20px rgba(0,0,0,0.2);
-    }
-    h2 { color: #333; margin-bottom: 10px; }
-    .bot-msg { font-size: 1.1rem; margin-bottom: 20px; color: #555; }
-    input[type="text"] { width: 80%; padding: 10px; margin-bottom: 15px; border-radius: 6px; border: 1px solid #ccc; font-size: 1rem; }
-    input[type="file"] { margin-bottom: 20px; }
-    .thumbnails { display: flex; flex-wrap: wrap; justify-content: center; margin-bottom: 20px; }
-    .thumb-container { position: relative; display: inline-block; margin: 5px; }
-    .thumb { width: 80px; height: 80px; object-fit: cover; border-radius: 6px; border: 1px solid #ccc; }
-    .status { position: absolute; top: 2px; right: 2px; font-size: 18px; }
-    button { padding: 10px 20px; font-size: 1rem; border: none; border-radius: 6px; background-color: #ff69b4; color: white; cursor: pointer; }
-    button:disabled { background-color: #aaa; }
-    .message { margin-top: 15px; font-size: 1rem; color: #333; }
-  </style>
+<meta charset="UTF-8">
+<title>Özdenur & M.Baran Nişan Etkinliği</title>
+
+<style>
+body {
+    margin: 0;
+    padding: 0;
+    font-family: 'Arial', sans-serif;
+    background: url('https://images.unsplash.com/photo-1519744792095-2f2205e87b6f?auto=format&fit=crop&w=1200&q=60')
+        no-repeat center center fixed;
+    background-size: cover;
+}
+
+.backdrop {
+    width: 100%;
+    height: 100%;
+    backdrop-filter: blur(6px);
+    background: rgba(255, 255, 255, 0.35);
+    position: absolute;
+    top: 0;
+    left: 0;
+}
+
+.container {
+    position: relative;
+    max-width: 500px;
+    margin: 80px auto;
+    background: rgba(255, 255, 255, 0.88);
+    padding: 28px 32px;
+    border-radius: 16px;
+    text-align: center;
+    box-shadow: 0px 6px 24px rgba(0,0,0,0.18);
+}
+
+h2 {
+    font-weight: 600;
+    font-size: 22px;
+    margin-bottom: 20px;
+    color: #333;
+}
+
+input[type="file"] {
+    padding: 12px;
+    margin-top: 10px;
+    background: #fff;
+    border: 1px solid #ccc;
+    width: 100%;
+    border-radius: 10px;
+}
+
+button {
+    margin-top: 18px;
+    padding: 12px;
+    width: 100%;
+    background: #dba9c6;
+    border: none;
+    color: white;
+    font-size: 16px;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: 0.25s;
+}
+
+button:hover {
+    background: #c58db0;
+}
+
+#status {
+    margin-top: 22px;
+    font-size: 16px;
+    font-weight: 600;
+    color: #444;
+}
+
+/* Thumbnail Grid */
+#thumbnails {
+    margin-top: 20px;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+    gap: 10px;
+    justify-items: center;
+}
+.thumb-container {
+    position: relative;
+    width: 80px;
+    height: 80px;
+}
+.thumb-container img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+}
+.thumb-status {
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    font-size: 18px;
+}
+
+/* loading bar */
+#loadingBarWrapper {
+    width: 100%;
+    background: #eee;
+    margin-top: 18px;
+    height: 12px;
+    border-radius: 10px;
+    overflow: hidden;
+    display: none;
+}
+
+#loadingBar {
+    width: 0%;
+    height: 100%;
+    background: #c58db0;
+    transition: width 0.3s;
+}
+</style>
 </head>
 <body>
-  <div class="container">
-    <h2>Etkinliğimize Hoşgeldiniz</h2>
-    <div class="bot-msg">Etkinlikte çektiğiniz fotoğrafları bizimle de paylaşır mısnız 😊</div>
-    <input type="text" id="username" placeholder="İsminizi girin" required>
-    <input type="file" id="fileInput" multiple accept="image/*">
-    <div class="thumbnails" id="thumbnails"></div>
-    <button id="uploadBtn">Fotoğrafları Yükle</button>
-    <div class="message" id="message"></div>
+
+<div class="backdrop"></div>
+
+<div class="container">
+  <h2>Etkinliğimize Hoşgeldiniz</h2>
+
+  <input type="file" id="fileInput" accept="image/*" multiple>
+
+  <button onclick="upload()">Fotoğrafları Yükle</button>
+
+  <div id="loadingBarWrapper">
+      <div id="loadingBar"></div>
   </div>
 
-  <script>
-    const fileInput = document.getElementById('fileInput');
-    const thumbnails = document.getElementById('thumbnails');
-    const uploadBtn = document.getElementById('uploadBtn');
-    const message = document.getElementById('message');
-    const usernameInput = document.getElementById('username');
+  <p id="status"></p>
 
-    let selectedFiles = [];
+  <div id="thumbnails"></div>
+</div>
 
-    fileInput.addEventListener('change', (e) => {
-      const files = Array.from(e.target.files);
-      const seen = new Set();
-      selectedFiles = [];
-      thumbnails.innerHTML = '';
+<script>
+async function upload() {
+    const fileInput = document.getElementById("fileInput");
+    const status = document.getElementById("status");
+    const barWrapper = document.getElementById("loadingBarWrapper");
+    const bar = document.getElementById("loadingBar");
+    const thumbnailsDiv = document.getElementById("thumbnails");
 
-      files.forEach(file => {
-        if(seen.has(file.name)) return;
-        seen.add(file.name);
-        selectedFiles.push(file);
+    status.innerText = "";
+    barWrapper.style.display = "none";
+    bar.style.width = "0%";
+    thumbnailsDiv.innerHTML = "";
+
+    if (!fileInput.files.length) {
+        status.innerText = "Lütfen en az bir fotoğraf seçin.";
+        return;
+    }
+
+    const files = Array.from(fileInput.files);
+    const username = prompt("Lütfen isminizi girin:") || "Anonim";
+
+    for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+
+        // Thumbnail oluştur
+        const thumbContainer = document.createElement("div");
+        thumbContainer.className = "thumb-container";
+        const imgEl = document.createElement("img");
+        const statusEl = document.createElement("div");
+        statusEl.className = "thumb-status";
+        thumbContainer.appendChild(imgEl);
+        thumbContainer.appendChild(statusEl);
+        thumbnailsDiv.appendChild(thumbContainer);
 
         const reader = new FileReader();
-        reader.onload = function(event) {
-          const img = new Image();
-          img.onload = function() {
-            const canvas = document.createElement('canvas');
-            const maxDim = 80;
-            let w = img.width;
-            let h = img.height;
-            if(w > h) { h = h * (maxDim / w); w = maxDim; } 
-            else { w = w * (maxDim / h); h = maxDim; }
-            canvas.width = w;
-            canvas.height = h;
-            const ctx = canvas.getContext('2d');
-            ctx.drawImage(img, 0, 0, w, h);
-            const thumbImg = document.createElement('img');
-            thumbImg.src = canvas.toDataURL('image/jpeg', 0.5);
-            thumbImg.className = 'thumb';
-
-            const container = document.createElement('div');
-            container.className = 'thumb-container';
-            container.appendChild(thumbImg);
-            const status = document.createElement('div');
-            status.className = 'status';
-            container.appendChild(status);
-
-            thumbnails.appendChild(container);
-            file._statusEl = status;
-          }
-          img.src = event.target.result;
+        reader.onload = function(e) {
+            imgEl.src = e.target.result;
         }
         reader.readAsDataURL(file);
-      });
-    });
 
-    uploadBtn.addEventListener('click', async () => {
-      const username = usernameInput.value.trim();
-      if(!username) { message.textContent = 'Lütfen isminizi girin!'; return; }
-      if(selectedFiles.length === 0) { message.textContent = 'Lütfen en az bir fotoğraf seçin!'; return; }
+        // API'ye tek tek gönder
+        barWrapper.style.display = "block";
+        bar.style.width = "0%";
+        status.innerText = "Yükleniyor: " + file.name;
 
-      uploadBtn.disabled = true;
-      uploadBtn.textContent = 'Yükleniyor...';
-      message.textContent = 'Yükleniyor, lütfen bekleyin...';
+        let progress = 0;
+        let interval = setInterval(() => {
+            progress += 10;
+            if(progress <= 95) bar.style.width = progress + "%";
+        }, 200);
 
-      for(const file of selectedFiles){
-        const formData = new FormData();
-        formData.append('username', username);
-        formData.append('file', file);
+        const base64Data = await new Promise(resolve => {
+            const r = new FileReader();
+            r.onload = () => resolve(r.result.split(",")[1]);
+            r.readAsDataURL(file);
+        });
 
         try {
-          const res = await fetch('https://script.google.com/macros/s/AKfycbzOKSPKrUZUJi0-_Cs1ICw94-Jrf8iDh05OLKVrsPlozZsYZ2gd-yhlpWUPQ/exec', {
-            method: 'POST',
-            body: formData
-          });
-          if(res.ok){
-            file._statusEl.textContent = '✅';
-          } else {
-            file._statusEl.textContent = '❌';
-          }
-        } catch (err) {
-          file._statusEl.textContent = '❌';
-          console.error(err);
-        }
-      }
+            const res = await fetch("https://script.google.com/macros/s/AKfycbzOKSPKrUZUJi0-_Cs1ICw94-Jrf8iDh05OLKVrsPlozZsYZ2gd-yhlpWUPQ/exec", {
+                method: "POST",
+                body: new URLSearchParams({
+                    file: base64Data,
+                    filename: file.name,
+                    mime: file.type,
+                    username: username
+                })
+            });
 
-      message.textContent = 'Yükleme tamamlandı!';
-      uploadBtn.disabled = false;
-      uploadBtn.textContent = 'Fotoğrafları Yükle';
-    });
-  </script>
+            const result = await res.json();
+
+            clearInterval(interval);
+            bar.style.width = "100%";
+
+            if(result.status === "success") {
+                statusEl.innerText = "✅";
+            } else {
+                statusEl.innerText = "❌";
+            }
+        } catch (err) {
+            console.error(err);
+            clearInterval(interval);
+            bar.style.width = "100%";
+            statusEl.innerText = "❌";
+        }
+    }
+
+    status.innerText = "Tüm yüklemeler tamamlandı!";
+    setTimeout(()=>{barWrapper.style.display="none"}, 800);
+}
+</script>
+
 </body>
 </html>
