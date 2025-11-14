@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Fotoğraf Yükleme</title>
+  <title>Özdenur & M.Baran Nişan Etkinliği</title>
   <style>
     body {
       font-family: 'Arial', sans-serif;
@@ -15,7 +15,6 @@
       min-height: 100vh;
       margin: 0;
     }
-
     .container {
       background-color: rgba(255,255,255,0.9);
       padding: 30px;
@@ -25,98 +24,29 @@
       max-width: 500px;
       box-shadow: 0 0 20px rgba(0,0,0,0.2);
     }
-
-    h2 {
-      color: #333;
-      margin-bottom: 10px;
-    }
-
-    .bot-msg {
-      font-size: 1.1rem;
-      margin-bottom: 20px;
-      color: #555;
-    }
-
-    input[type="text"] {
-      width: 80%;
-      padding: 10px;
-      margin-bottom: 15px;
-      border-radius: 6px;
-      border: 1px solid #ccc;
-      font-size: 1rem;
-    }
-
-    input[type="file"] {
-      margin-bottom: 20px;
-    }
-
-    .thumbnails {
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: center;
-      margin-bottom: 20px;
-    }
-
-    .thumb {
-      width: 80px;
-      height: 80px;
-      object-fit: cover;
-      margin: 5px;
-      border-radius: 6px;
-      border: 1px solid #ccc;
-    }
-
-    button {
-      padding: 10px 20px;
-      font-size: 1rem;
-      border: none;
-      border-radius: 6px;
-      background-color: #ff69b4;
-      color: white;
-      cursor: pointer;
-    }
-
-    button:disabled {
-      background-color: #aaa;
-    }
-
-    .message {
-      margin-top: 15px;
-      font-size: 1rem;
-      color: #333;
-    }
-
-    .progress-bar {
-      width: 100%;
-      background-color: #eee;
-      border-radius: 6px;
-      overflow: hidden;
-      height: 10px;
-      margin-bottom: 15px;
-      display: none;
-    }
-
-    .progress-bar-inner {
-      height: 100%;
-      width: 0;
-      background-color: #ff69b4;
-      transition: width 0.2s;
-    }
+    h2 { color: #333; margin-bottom: 10px; }
+    .bot-msg { font-size: 1.1rem; margin-bottom: 20px; color: #555; }
+    input[type="text"] { width: 80%; padding: 10px; margin-bottom: 15px; border-radius: 6px; border: 1px solid #ccc; font-size: 1rem; }
+    input[type="file"] { margin-bottom: 20px; }
+    .thumbnails { display: flex; flex-wrap: wrap; justify-content: center; margin-bottom: 20px; }
+    .thumb { width: 80px; height: 80px; object-fit: cover; margin: 5px; border-radius: 6px; border: 1px solid #ccc; }
+    button { padding: 10px 20px; font-size: 1rem; border: none; border-radius: 6px; background-color: #ff69b4; color: white; cursor: pointer; }
+    button:disabled { background-color: #aaa; }
+    .message { margin-top: 15px; font-size: 1rem; color: #333; }
+    .progress-bar { width: 100%; background-color: #eee; border-radius: 6px; overflow: hidden; height: 10px; margin-bottom: 15px; display: none; }
+    .progress-bar-inner { height: 100%; width: 0; background-color: #ff69b4; transition: width 0.2s; }
   </style>
 </head>
 <body>
   <div class="container">
-    <h2>Fotoğraf Yükleme Paneli</h2>
+    <h2>Etkinliğimize Hoşgeldiniz</h2>
     <div class="bot-msg">Etkinlikte çektiğiniz fotoğrafları bizimle de paylaşır mısnız 😊</div>
     <input type="text" id="username" placeholder="İsminizi girin" required>
     <input type="file" id="fileInput" multiple accept="image/*">
-    
     <div class="thumbnails" id="thumbnails"></div>
-
     <div class="progress-bar" id="progressBar">
       <div class="progress-bar-inner" id="progressBarInner"></div>
     </div>
-
     <button id="uploadBtn">Fotoğrafları Yükle</button>
     <div class="message" id="message"></div>
   </div>
@@ -133,21 +63,36 @@
     let selectedFiles = [];
 
     fileInput.addEventListener('change', (e) => {
-      selectedFiles = Array.from(e.target.files);
-      thumbnails.innerHTML = '';
+      const files = Array.from(e.target.files);
       const seen = new Set();
-      selectedFiles = selectedFiles.filter(file => {
-        if(seen.has(file.name)) return false;
+      selectedFiles = [];
+      thumbnails.innerHTML = '';
+      files.forEach(file => {
+        if(seen.has(file.name)) return;
         seen.add(file.name);
-        return true;
-      });
-      selectedFiles.forEach(file => {
+        selectedFiles.push(file);
+
+        // Küçük boyutlu thumbnail
         const reader = new FileReader();
-        reader.onload = function(e) {
-          const img = document.createElement('img');
-          img.src = e.target.result;
-          img.className = 'thumb';
-          thumbnails.appendChild(img);
+        reader.onload = function(event) {
+          const img = new Image();
+          img.onload = function() {
+            const canvas = document.createElement('canvas');
+            const maxDim = 80;
+            let w = img.width;
+            let h = img.height;
+            if(w > h) { h = h * (maxDim / w); w = maxDim; } 
+            else { w = w * (maxDim / h); h = maxDim; }
+            canvas.width = w;
+            canvas.height = h;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, w, h);
+            const thumbImg = document.createElement('img');
+            thumbImg.src = canvas.toDataURL('image/jpeg', 0.5); // düşük KB
+            thumbImg.className = 'thumb';
+            thumbnails.appendChild(thumbImg);
+          }
+          img.src = event.target.result;
         }
         reader.readAsDataURL(file);
       });
@@ -155,14 +100,13 @@
 
     uploadBtn.addEventListener('click', async () => {
       const username = usernameInput.value.trim();
-      if(!username) {
-        message.textContent = 'Lütfen isminizi girin!';
-        return;
-      }
-      if(selectedFiles.length === 0) {
-        message.textContent = 'Lütfen en az bir fotoğraf seçin!';
-        return;
-      }
+      if(!username) { message.textContent = 'Lütfen isminizi girin!'; return; }
+      if(selectedFiles.length === 0) { message.textContent = 'Lütfen en az bir fotoğraf seçin!'; return; }
+
+      // Tuş geribildirimi
+      uploadBtn.disabled = true;
+      const originalText = uploadBtn.textContent;
+      uploadBtn.textContent = 'Yükleniyor...';
 
       message.textContent = 'Yükleniyor, lütfen bekleyin...';
       progressBar.style.display = 'block';
@@ -175,19 +119,24 @@
         formData.append('file', file);
 
         try {
-          await fetch('https://script.google.com/macros/s/AKfycbzOKSPKrUZUJi0-_Cs1ICw94-Jrf8iDh05OLKVrsPlozZsYZ2gd-yhlpWUPQ/exec', {
+          const res = await fetch('https://script.google.com/macros/s/AKfycbzOKSPKrUZUJi0-_Cs1ICw94-Jrf8iDh05OLKVrsPlozZsYZ2gd-yhlpWUPQ/exec', {
             method: 'POST',
             body: formData
           });
+          if(!res.ok) throw new Error('Yükleme başarısız');
           progressBarInner.style.width = `${((i+1)/selectedFiles.length)*100}%`;
         } catch (err) {
           message.textContent = 'Hata oluştu, lütfen tekrar yükleyin.';
           console.error(err);
+          uploadBtn.disabled = false;
+          uploadBtn.textContent = originalText;
           return;
         }
       }
 
       message.textContent = 'Teşekkürler, yükleme başarılı!';
+      uploadBtn.disabled = false;
+      uploadBtn.textContent = originalText;
       fileInput.value = '';
       thumbnails.innerHTML = '';
       selectedFiles = [];
