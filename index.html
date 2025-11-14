@@ -1,189 +1,198 @@
 <!DOCTYPE html>
 <html lang="tr">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Fotoğraf Yükleme</title>
-
-<style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Fotoğraf Yükleme</title>
+  <style>
     body {
-        margin: 0;
-        font-family: "Segoe UI", sans-serif;
-        background: url('https://i.pinimg.com/originals/50/df/5f/50df5f4b67d27c6f3df33cf278dcb97a.jpg') center/cover no-repeat fixed;
-        backdrop-filter: blur(4px);
+      font-family: 'Arial', sans-serif;
+      background: url('https://i.imgur.com/your-soft-background.jpg') no-repeat center center fixed;
+      background-size: cover;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      margin: 0;
     }
 
     .container {
-        max-width: 450px;
-        margin: 80px auto;
-        background: rgba(255,255,255,0.85);
-        padding: 30px;
-        border-radius: 18px;
-        box-shadow: 0 10px 25px rgba(0,0,0,0.15);
-        text-align: center;
+      background-color: rgba(255,255,255,0.9);
+      padding: 30px;
+      border-radius: 12px;
+      text-align: center;
+      width: 90%;
+      max-width: 500px;
+      box-shadow: 0 0 20px rgba(0,0,0,0.2);
     }
 
     h2 {
-        margin-bottom: 10px;
-        font-size: 24px;
-        font-weight: 600;
-        color: #444;
+      color: #333;
+      margin-bottom: 10px;
     }
 
-    .drag-area {
-        border: 2px dashed #c8a2c8;
-        border-radius: 14px;
-        padding: 30px;
-        margin-top: 25px;
-        background: rgba(255, 245, 255, 0.7);
-        transition: .2s;
-        cursor: pointer;
+    .bot-msg {
+      font-size: 1.1rem;
+      margin-bottom: 20px;
+      color: #555;
     }
 
-    .drag-area.hover { 
-        background: rgba(230, 200, 230, 0.8);
-        border-color: #a56fa5;
+    input[type="text"] {
+      width: 80%;
+      padding: 10px;
+      margin-bottom: 15px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      font-size: 1rem;
     }
 
-    #fileInput {
-        display: none;
+    input[type="file"] {
+      margin-bottom: 20px;
     }
 
-    .btn {
-        margin-top: 20px;
-        padding: 12px 20px;
-        background: #b06fb0;
-        color: #fff;
-        border: none;
-        border-radius: 10px;
-        font-size: 16px;
-        cursor: pointer;
-        width: 100%;
-        transition: 0.2s;
+    .thumbnails {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      margin-bottom: 20px;
     }
 
-    .btn:hover {
-        background: #9c5f9c;
+    .thumb {
+      width: 80px;
+      height: 80px;
+      object-fit: cover;
+      margin: 5px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
     }
 
-    #status {
-        margin-top: 20px;
-        font-size: 15px;
-        color: #444;
-        display: none;
+    button {
+      padding: 10px 20px;
+      font-size: 1rem;
+      border: none;
+      border-radius: 6px;
+      background-color: #ff69b4;
+      color: white;
+      cursor: pointer;
     }
 
-    .loader {
-        width: 100%;
-        height: 10px;
-        background: #eee;
-        border-radius: 10px;
-        overflow: hidden;
-        margin-top: 15px;
-        display: none;
+    button:disabled {
+      background-color: #aaa;
     }
 
-    .loader .bar {
-        width: 0%;
-        height: 100%;
-        background: #b06fb0;
-        animation: loadAnim 2s infinite;
+    .message {
+      margin-top: 15px;
+      font-size: 1rem;
+      color: #333;
     }
 
-    @keyframes loadAnim {
-        0% { width: 0%; }
-        50% { width: 80%; }
-        100% { width: 0%; }
+    .progress-bar {
+      width: 100%;
+      background-color: #eee;
+      border-radius: 6px;
+      overflow: hidden;
+      height: 10px;
+      margin-bottom: 15px;
+      display: none;
     }
-</style>
+
+    .progress-bar-inner {
+      height: 100%;
+      width: 0;
+      background-color: #ff69b4;
+      transition: width 0.2s;
+    }
+  </style>
 </head>
-
 <body>
-<div class="container">
-    <h2>Fotoğraf Yükle</h2>
+  <div class="container">
+    <h2>Fotoğraf Yükleme Paneli</h2>
+    <div class="bot-msg">Etkinlikte çektiğiniz fotoğrafları bizimle de paylaşır mısnız 😊</div>
+    <input type="text" id="username" placeholder="İsminizi girin" required>
+    <input type="file" id="fileInput" multiple accept="image/*">
+    
+    <div class="thumbnails" id="thumbnails"></div>
 
-    <div class="drag-area" id="dragArea">
-        <p>Dosyayı buraya sürükle<br>veya tıklayıp seç</p>
+    <div class="progress-bar" id="progressBar">
+      <div class="progress-bar-inner" id="progressBarInner"></div>
     </div>
 
-    <input type="file" id="fileInput" accept="image/*">
-    <button class="btn" id="uploadBtn">Fotoğraf Yükle</button>
+    <button id="uploadBtn">Fotoğrafları Yükle</button>
+    <div class="message" id="message"></div>
+  </div>
 
-    <div class="loader" id="loader"><div class="bar"></div></div>
-    <div id="status"></div>
-</div>
+  <script>
+    const fileInput = document.getElementById('fileInput');
+    const thumbnails = document.getElementById('thumbnails');
+    const uploadBtn = document.getElementById('uploadBtn');
+    const message = document.getElementById('message');
+    const progressBar = document.getElementById('progressBar');
+    const progressBarInner = document.getElementById('progressBarInner');
+    const usernameInput = document.getElementById('username');
 
-<script>
-    const dragArea = document.getElementById("dragArea");
-    const fileInput = document.getElementById("fileInput");
-    const uploadBtn = document.getElementById("uploadBtn");
-    const loader = document.getElementById("loader");
-    const statusMsg = document.getElementById("status");
+    let selectedFiles = [];
 
-    let selectedFile = null;
-
-    dragArea.addEventListener("click", () => fileInput.click());
-
-    dragArea.addEventListener("dragover", (e) => {
-        e.preventDefault();
-        dragArea.classList.add("hover");
-    });
-
-    dragArea.addEventListener("dragleave", () => {
-        dragArea.classList.remove("hover");
-    });
-
-    dragArea.addEventListener("drop", (e) => {
-        e.preventDefault();
-        dragArea.classList.remove("hover");
-        selectedFile = e.dataTransfer.files[0];
-        dragArea.innerHTML = `<strong>${selectedFile.name}</strong>`;
-    });
-
-    fileInput.addEventListener("change", (e) => {
-        selectedFile = e.target.files[0];
-        dragArea.innerHTML = `<strong>${selectedFile.name}</strong>`;
-    });
-
-    uploadBtn.addEventListener("click", async () => {
-        if (!selectedFile) {
-            statusMsg.style.display = "block";
-            statusMsg.style.color = "red";
-            statusMsg.innerText = "Lütfen bir fotoğraf seçin.";
-            return;
+    fileInput.addEventListener('change', (e) => {
+      selectedFiles = Array.from(e.target.files);
+      thumbnails.innerHTML = '';
+      const seen = new Set();
+      selectedFiles = selectedFiles.filter(file => {
+        if(seen.has(file.name)) return false;
+        seen.add(file.name);
+        return true;
+      });
+      selectedFiles.forEach(file => {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          const img = document.createElement('img');
+          img.src = e.target.result;
+          img.className = 'thumb';
+          thumbnails.appendChild(img);
         }
+        reader.readAsDataURL(file);
+      });
+    });
 
+    uploadBtn.addEventListener('click', async () => {
+      const username = usernameInput.value.trim();
+      if(!username) {
+        message.textContent = 'Lütfen isminizi girin!';
+        return;
+      }
+      if(selectedFiles.length === 0) {
+        message.textContent = 'Lütfen en az bir fotoğraf seçin!';
+        return;
+      }
+
+      message.textContent = 'Yükleniyor, lütfen bekleyin...';
+      progressBar.style.display = 'block';
+      progressBarInner.style.width = '0';
+
+      for(let i=0; i<selectedFiles.length; i++){
+        const file = selectedFiles[i];
         const formData = new FormData();
-        formData.append("file", selectedFile);
-
-        loader.style.display = "block";
-        statusMsg.style.display = "block";
-        statusMsg.style.color = "#444";
-        statusMsg.innerText = "Lütfen bekleyin... Yükleniyor.";
+        formData.append('username', username);
+        formData.append('file', file);
 
         try {
-            const response = await fetch(
-                "https://script.google.com/macros/s/AKfycbzOKSPKrUZUJi0-_Cs1ICw94-Jrf8iDh05OLKVrsPlozZsYZtTFLb3hHZ2gd-yhlpWUPQ/exec",
-                { method: "POST", body: formData }
-            );
-
-            loader.style.display = "none";
-
-            if (response.ok) {
-                statusMsg.style.color = "green";
-                statusMsg.innerText = "Teşekkürler! Yükleme başarılı.";
-            } else {
-                statusMsg.style.color = "red";
-                statusMsg.innerText = "Yükleme başarısız.";
-            }
-
+          await fetch('https://script.google.com/macros/s/AKfycbzOKSPKrUZUJi0-_Cs1ICw94-Jrf8iDh05OLKVrsPlozZsYZ2gd-yhlpWUPQ/exec', {
+            method: 'POST',
+            body: formData
+          });
+          progressBarInner.style.width = `${((i+1)/selectedFiles.length)*100}%`;
         } catch (err) {
-            loader.style.display = "none";
-            statusMsg.style.color = "red";
-            statusMsg.innerText = "Bir hata oluştu.";
+          message.textContent = 'Hata oluştu, lütfen tekrar yükleyin.';
+          console.error(err);
+          return;
         }
-    });
-</script>
+      }
 
+      message.textContent = 'Teşekkürler, yükleme başarılı!';
+      fileInput.value = '';
+      thumbnails.innerHTML = '';
+      selectedFiles = [];
+      progressBar.style.display = 'none';
+    });
+  </script>
 </body>
 </html>
