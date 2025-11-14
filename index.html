@@ -79,27 +79,27 @@ button:hover {
 #thumbnails {
     margin-top: 20px;
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
-    gap: 10px;
+    grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
+    gap: 8px;
     justify-items: center;
 }
 .thumb-container {
     position: relative;
-    width: 80px;
-    height: 80px;
+    width: 60px;
+    height: 60px;
 }
 .thumb-container img {
     width: 100%;
     height: 100%;
     object-fit: cover;
-    border-radius: 8px;
+    border-radius: 6px;
     border: 1px solid #ccc;
 }
 .thumb-status {
     position: absolute;
-    top: 2px;
-    right: 2px;
-    font-size: 18px;
+    top: 0;
+    right: 0;
+    font-size: 16px;
 }
 
 /* loading bar */
@@ -160,12 +160,12 @@ async function upload() {
     }
 
     const files = Array.from(fileInput.files);
-    const username = prompt("Lütfen isminizi girin:") || "Anonim";
+    let hasError = false;
 
     for (let i = 0; i < files.length; i++) {
         const file = files[i];
 
-        // Thumbnail oluştur
+        // Thumbnail container
         const thumbContainer = document.createElement("div");
         thumbContainer.className = "thumb-container";
         const imgEl = document.createElement("img");
@@ -175,9 +175,24 @@ async function upload() {
         thumbContainer.appendChild(statusEl);
         thumbnailsDiv.appendChild(thumbContainer);
 
+        // Küçük thumbnail oluşturmak için canvas
         const reader = new FileReader();
         reader.onload = function(e) {
-            imgEl.src = e.target.result;
+            const img = new Image();
+            img.onload = function() {
+                const canvas = document.createElement("canvas");
+                const maxDim = 60;
+                let w = img.width;
+                let h = img.height;
+                if(w > h) { h = h * (maxDim / w); w = maxDim; } 
+                else { w = w * (maxDim / h); h = maxDim; }
+                canvas.width = w;
+                canvas.height = h;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, w, h);
+                imgEl.src = canvas.toDataURL('image/jpeg', 0.5);
+            };
+            img.src = e.target.result;
         }
         reader.readAsDataURL(file);
 
@@ -199,18 +214,16 @@ async function upload() {
         });
 
         try {
-            const res = await fetch("https://script.google.com/macros/s/AKfycbzOKSPKrUZUJi0-_Cs1ICw94-Jrf8iDh05OLKVrsPlozZsYZ2gd-yhlpWUPQ/exec", {
+            const res = await fetch("https://script.google.com/macros/s/AKfycbzOKSPKrUZUJi0-_Cs1ICw94-Jrf8iDh05OLKVrsPlozZsYZtTFLb3hHZ2gd-yhlpWUPQ/exec", {
                 method: "POST",
                 body: new URLSearchParams({
                     file: base64Data,
                     filename: file.name,
-                    mime: file.type,
-                    username: username
+                    mime: file.type
                 })
             });
 
             const result = await res.json();
-
             clearInterval(interval);
             bar.style.width = "100%";
 
@@ -218,16 +231,18 @@ async function upload() {
                 statusEl.innerText = "✅";
             } else {
                 statusEl.innerText = "❌";
+                hasError = true;
             }
         } catch (err) {
             console.error(err);
             clearInterval(interval);
             bar.style.width = "100%";
             statusEl.innerText = "❌";
+            hasError = true;
         }
     }
 
-    status.innerText = "Tüm yüklemeler tamamlandı!";
+    status.innerText = hasError ? "Hata oluştu! Lütfen yeniden deneyin." : "Tüm yüklemeler tamamlandı!";
     setTimeout(()=>{barWrapper.style.display="none"}, 800);
 }
 </script>
