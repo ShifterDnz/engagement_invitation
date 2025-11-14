@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<title>Admin Panel</title>
+<style>
+body { font-family: Arial; margin: 40px; background:#fafafa; }
+.item { margin-bottom:10px; }
+</style>
+</head>
+<body>
+<h2>Fotoğraf Yüklemeleri</h2>
+<div id="photos"></div>
+
+<script>
+async function load() {
+  let pass = prompt("Şifre:");
+  if (pass !== "240396") {
+    document.body.innerHTML = "Yetkisiz giriş.";
+    return;
+  }
+
+  let res = await fetch("https://script.google.com/macros/s/AKfycbzOKSPKrUZUJi0-_Cs1ICw94-Jrf8iDh05OLKVrsPlozZsYZtTFLb3hHZ2gd-yhlpWUPQ/exec?service=list");
+  let data = await res.json();
+
+  let html = "";
+  data.forEach(x => {
+    html += `<div class="item"><a href="${x.url}" target="_blank">${x.name}</a></div>`;
+  });
+
+  document.getElementById("photos").innerHTML = html;
+}
+load();
+</script>
+</body>
+</html>
