@@ -16,7 +16,7 @@
       margin: 0;
     }
     .container {
-      background-color: rgba(255,255,255,0.9);
+      background-color: rgba(255,255,255,0.95);
       padding: 30px;
       border-radius: 12px;
       text-align: center;
@@ -29,12 +29,12 @@
     input[type="text"] { width: 80%; padding: 10px; margin-bottom: 15px; border-radius: 6px; border: 1px solid #ccc; font-size: 1rem; }
     input[type="file"] { margin-bottom: 20px; }
     .thumbnails { display: flex; flex-wrap: wrap; justify-content: center; margin-bottom: 20px; }
-    .thumb { width: 80px; height: 80px; object-fit: cover; margin: 5px; border-radius: 6px; border: 1px solid #ccc; }
+    .thumb-container { position: relative; display: inline-block; margin: 5px; }
+    .thumb { width: 80px; height: 80px; object-fit: cover; border-radius: 6px; border: 1px solid #ccc; }
+    .status { position: absolute; top: 2px; right: 2px; font-size: 18px; }
     button { padding: 10px 20px; font-size: 1rem; border: none; border-radius: 6px; background-color: #ff69b4; color: white; cursor: pointer; }
     button:disabled { background-color: #aaa; }
     .message { margin-top: 15px; font-size: 1rem; color: #333; }
-    .progress-bar { width: 100%; background-color: #eee; border-radius: 6px; overflow: hidden; height: 10px; margin-bottom: 15px; display: none; }
-    .progress-bar-inner { height: 100%; width: 0; background-color: #ff69b4; transition: width 0.2s; }
   </style>
 </head>
 <body>
@@ -44,9 +44,6 @@
     <input type="text" id="username" placeholder="İsminizi girin" required>
     <input type="file" id="fileInput" multiple accept="image/*">
     <div class="thumbnails" id="thumbnails"></div>
-    <div class="progress-bar" id="progressBar">
-      <div class="progress-bar-inner" id="progressBarInner"></div>
-    </div>
     <button id="uploadBtn">Fotoğrafları Yükle</button>
     <div class="message" id="message"></div>
   </div>
@@ -56,8 +53,6 @@
     const thumbnails = document.getElementById('thumbnails');
     const uploadBtn = document.getElementById('uploadBtn');
     const message = document.getElementById('message');
-    const progressBar = document.getElementById('progressBar');
-    const progressBarInner = document.getElementById('progressBarInner');
     const usernameInput = document.getElementById('username');
 
     let selectedFiles = [];
@@ -67,12 +62,12 @@
       const seen = new Set();
       selectedFiles = [];
       thumbnails.innerHTML = '';
+
       files.forEach(file => {
         if(seen.has(file.name)) return;
         seen.add(file.name);
         selectedFiles.push(file);
 
-        // Küçük boyutlu thumbnail
         const reader = new FileReader();
         reader.onload = function(event) {
           const img = new Image();
@@ -88,9 +83,18 @@
             const ctx = canvas.getContext('2d');
             ctx.drawImage(img, 0, 0, w, h);
             const thumbImg = document.createElement('img');
-            thumbImg.src = canvas.toDataURL('image/jpeg', 0.5); // düşük KB
+            thumbImg.src = canvas.toDataURL('image/jpeg', 0.5);
             thumbImg.className = 'thumb';
-            thumbnails.appendChild(thumbImg);
+
+            const container = document.createElement('div');
+            container.className = 'thumb-container';
+            container.appendChild(thumbImg);
+            const status = document.createElement('div');
+            status.className = 'status';
+            container.appendChild(status);
+
+            thumbnails.appendChild(container);
+            file._statusEl = status;
           }
           img.src = event.target.result;
         }
@@ -103,17 +107,11 @@
       if(!username) { message.textContent = 'Lütfen isminizi girin!'; return; }
       if(selectedFiles.length === 0) { message.textContent = 'Lütfen en az bir fotoğraf seçin!'; return; }
 
-      // Tuş geribildirimi
       uploadBtn.disabled = true;
-      const originalText = uploadBtn.textContent;
       uploadBtn.textContent = 'Yükleniyor...';
-
       message.textContent = 'Yükleniyor, lütfen bekleyin...';
-      progressBar.style.display = 'block';
-      progressBarInner.style.width = '0';
 
-      for(let i=0; i<selectedFiles.length; i++){
-        const file = selectedFiles[i];
+      for(const file of selectedFiles){
         const formData = new FormData();
         formData.append('username', username);
         formData.append('file', file);
@@ -123,24 +121,20 @@
             method: 'POST',
             body: formData
           });
-          if(!res.ok) throw new Error('Yükleme başarısız');
-          progressBarInner.style.width = `${((i+1)/selectedFiles.length)*100}%`;
+          if(res.ok){
+            file._statusEl.textContent = '✅';
+          } else {
+            file._statusEl.textContent = '❌';
+          }
         } catch (err) {
-          message.textContent = 'Hata oluştu, lütfen tekrar yükleyin.';
+          file._statusEl.textContent = '❌';
           console.error(err);
-          uploadBtn.disabled = false;
-          uploadBtn.textContent = originalText;
-          return;
         }
       }
 
-      message.textContent = 'Teşekkürler, yükleme başarılı!';
+      message.textContent = 'Yükleme tamamlandı!';
       uploadBtn.disabled = false;
-      uploadBtn.textContent = originalText;
-      fileInput.value = '';
-      thumbnails.innerHTML = '';
-      selectedFiles = [];
-      progressBar.style.display = 'none';
+      uploadBtn.textContent = 'Fotoğrafları Yükle';
     });
   </script>
 </body>
