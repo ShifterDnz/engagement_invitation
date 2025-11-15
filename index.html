@@ -9,7 +9,7 @@ body {
     margin: 0;
     padding: 0;
     font-family: 'Arial', sans-serif;
-    background: linear-gradient(135deg, #fff0f5, #ffe5f0);
+    background: linear-gradient(135deg, #fcefee, #ffe5f0);
 }
 
 .backdrop {
@@ -24,10 +24,10 @@ body {
 
 .container {
     position: relative;
-    max-width: 520px;
+    max-width: 500px;
     margin: 80px auto;
-    background: rgba(255, 255, 255, 0.97);
-    padding: 28px 36px;
+    background: rgba(255, 255, 255, 0.95);
+    padding: 28px 32px;
     border-radius: 20px;
     text-align: center;
     box-shadow: 0px 8px 32px rgba(0,0,0,0.15);
@@ -62,12 +62,7 @@ button {
     transition: 0.25s;
 }
 
-button:disabled {
-    background: #e6c0ce;
-    cursor: not-allowed;
-}
-
-button:hover:not(:disabled) {
+button:hover {
     background: #e07a9c;
 }
 
@@ -133,7 +128,7 @@ button:hover:not(:disabled) {
 
   <input type="file" id="fileInput" accept="image/*" multiple>
 
-  <button id="uploadBtn" onclick="upload()" disabled>Fotoğrafları Yükle</button>
+  <button onclick="upload()">Fotoğrafları Yükle</button>
 
   <div id="loadingBarWrapper">
       <div id="loadingBar"></div>
@@ -145,22 +140,30 @@ button:hover:not(:disabled) {
 </div>
 
 <script>
-const fileInput = document.getElementById("fileInput");
-const uploadBtn = document.getElementById("uploadBtn");
-const thumbnailsDiv = document.getElementById("thumbnails");
+async function upload() {
 
-fileInput.addEventListener("change", () => {
-    const files = Array.from(fileInput.files).slice(0, 8); // max 8
-    fileInput.value = ""; // reset input to allow re-select
+    const fileInput = document.getElementById("fileInput");
+    const status = document.getElementById("status");
+    const barWrapper = document.getElementById("loadingBarWrapper");
+    const bar = document.getElementById("loadingBar");
+    const thumbnailsDiv = document.getElementById("thumbnails");
+
+    status.innerText = "";
+    barWrapper.style.display = "none";
+    bar.style.width = "0%";
     thumbnailsDiv.innerHTML = "";
 
-    if(files.length === 0){
-        uploadBtn.disabled = true;
+    if (!fileInput.files.length) {
+        status.innerText = "Lütfen en az bir fotoğraf seçin.";
         return;
     }
 
-    uploadBtn.disabled = false;
+    let files = Array.from(fileInput.files).slice(0,8); // maksimum 8 fotoğraf
+    let hasError = false;
+    const maxParallel = 3;
+    let index = 0;
 
+    // Thumbnailleri oluştur
     files.forEach(file => {
         const thumbContainer = document.createElement("div");
         thumbContainer.className = "thumb-container";
@@ -191,17 +194,8 @@ fileInput.addEventListener("change", () => {
         };
         reader.readAsDataURL(file);
     });
-});
 
-// Mevcut upload fonksiyonu aynen korunuyor
-async function upload() {
-    const status = document.getElementById("status");
-    const barWrapper = document.getElementById("loadingBarWrapper");
-    const bar = document.getElementById("loadingBar");
-    const files = Array.from(fileInput.files).slice(0,8);
-    let hasError = false;
-    const maxParallel = 3;
-    let index = 0;
+    status.innerText = "Lütfen sayfayı kapatmayın, yükleme devam ediyor...";
 
     async function uploadNext() {
         if(index >= files.length) return;
@@ -214,7 +208,6 @@ async function upload() {
 
         barWrapper.style.display = "block";
         bar.style.width = "0%";
-        status.innerText = "Yükleniyor: " + file.name;
 
         let progress = 0;
         let interval = setInterval(() => {
@@ -237,13 +230,17 @@ async function upload() {
                     mime: file.type
                 })
             });
+
             const result = await res.json();
             clearInterval(interval);
             bar.style.width = "100%";
 
-            if(result.status === "success") statusEl.innerText = "✅";
-            else { statusEl.innerText = "❌"; hasError = true; }
-
+            if(result.status === "success"){
+                statusEl.innerText = "✅";
+            } else {
+                statusEl.innerText = "❌";
+                hasError = true;
+            }
         } catch(err){
             console.error(err);
             clearInterval(interval);
