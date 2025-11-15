@@ -9,7 +9,7 @@ body {
     margin: 0;
     padding: 0;
     font-family: 'Arial', sans-serif;
-    background: linear-gradient(135deg, #fcefee, #ffe5f0);
+    background: linear-gradient(135deg, #fff0f5, #ffe5f0);
 }
 
 .backdrop {
@@ -24,10 +24,10 @@ body {
 
 .container {
     position: relative;
-    max-width: 500px;
+    max-width: 520px;
     margin: 80px auto;
-    background: rgba(255, 255, 255, 0.95);
-    padding: 28px 32px;
+    background: rgba(255, 255, 255, 0.97);
+    padding: 28px 36px;
     border-radius: 20px;
     text-align: center;
     box-shadow: 0px 8px 32px rgba(0,0,0,0.15);
@@ -62,7 +62,12 @@ button {
     transition: 0.25s;
 }
 
-button:hover {
+button:disabled {
+    background: #e6c0ce;
+    cursor: not-allowed;
+}
+
+button:hover:not(:disabled) {
     background: #e07a9c;
 }
 
@@ -128,7 +133,7 @@ button:hover {
 
   <input type="file" id="fileInput" accept="image/*" multiple>
 
-  <button onclick="upload()">Fotoğrafları Yükle</button>
+  <button id="uploadBtn" onclick="upload()" disabled>Fotoğrafları Yükle</button>
 
   <div id="loadingBarWrapper">
       <div id="loadingBar"></div>
@@ -140,33 +145,23 @@ button:hover {
 </div>
 
 <script>
-async function upload() {
-    const fileInput = document.getElementById("fileInput");
-    const status = document.getElementById("status");
-    const barWrapper = document.getElementById("loadingBarWrapper");
-    const bar = document.getElementById("loadingBar");
-    const thumbnailsDiv = document.getElementById("thumbnails");
+const fileInput = document.getElementById("fileInput");
+const uploadBtn = document.getElementById("uploadBtn");
+const thumbnailsDiv = document.getElementById("thumbnails");
 
-    status.innerText = "";
-    barWrapper.style.display = "none";
-    bar.style.width = "0%";
+fileInput.addEventListener("change", () => {
+    const files = Array.from(fileInput.files).slice(0, 8); // max 8
+    fileInput.value = ""; // reset input to allow re-select
     thumbnailsDiv.innerHTML = "";
 
-    if (!fileInput.files.length) {
-        status.innerText = "Lütfen en az bir fotoğraf seçin.";
+    if(files.length === 0){
+        uploadBtn.disabled = true;
         return;
     }
 
-    const files = Array.from(fileInput.files);
-    let hasError = false;
-    const maxParallel = 3;
-    let index = 0;
+    uploadBtn.disabled = false;
 
-    async function uploadNext() {
-        if(index >= files.length) return;
-        const file = files[index];
-        index++;
-
+    files.forEach(file => {
         const thumbContainer = document.createElement("div");
         thumbContainer.className = "thumb-container";
         const imgEl = document.createElement("img");
@@ -176,28 +171,46 @@ async function upload() {
         thumbContainer.appendChild(statusEl);
         thumbnailsDiv.appendChild(thumbContainer);
 
-        await new Promise(resolve => {
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                const img = new Image();
-                img.onload = function() {
-                    const canvas = document.createElement("canvas");
-                    const maxDim = 60;
-                    let w = img.width;
-                    let h = img.height;
-                    if(w > h){ h = h * (maxDim/w); w = maxDim; }
-                    else { w = w * (maxDim/h); h = maxDim; }
-                    canvas.width = w;
-                    canvas.height = h;
-                    const ctx = canvas.getContext('2d');
-                    ctx.drawImage(img,0,0,w,h);
-                    imgEl.src = canvas.toDataURL('image/jpeg',0.5);
-                    resolve();
-                };
-                img.src = e.target.result;
+        const reader = new FileReader();
+        reader.onload = function(e){
+            const img = new Image();
+            img.onload = function(){
+                const canvas = document.createElement("canvas");
+                const maxDim = 60;
+                let w = img.width;
+                let h = img.height;
+                if(w > h){ h = h * (maxDim/w); w = maxDim; }
+                else { w = w * (maxDim/h); h = maxDim; }
+                canvas.width = w;
+                canvas.height = h;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img,0,0,w,h);
+                imgEl.src = canvas.toDataURL('image/jpeg',0.5);
             };
-            reader.readAsDataURL(file);
-        });
+            img.src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+    });
+});
+
+// Mevcut upload fonksiyonu aynen korunuyor
+async function upload() {
+    const status = document.getElementById("status");
+    const barWrapper = document.getElementById("loadingBarWrapper");
+    const bar = document.getElementById("loadingBar");
+    const files = Array.from(fileInput.files).slice(0,8);
+    let hasError = false;
+    const maxParallel = 3;
+    let index = 0;
+
+    async function uploadNext() {
+        if(index >= files.length) return;
+        const file = files[index];
+        const currentIndex = index;
+        index++;
+
+        const thumbContainer = thumbnailsDiv.children[currentIndex];
+        const statusEl = thumbContainer.querySelector(".thumb-status");
 
         barWrapper.style.display = "block";
         bar.style.width = "0%";
@@ -224,17 +237,13 @@ async function upload() {
                     mime: file.type
                 })
             });
-
             const result = await res.json();
             clearInterval(interval);
             bar.style.width = "100%";
 
-            if(result.status === "success"){
-                statusEl.innerText = "✅";
-            } else {
-                statusEl.innerText = "❌";
-                hasError = true;
-            }
+            if(result.status === "success") statusEl.innerText = "✅";
+            else { statusEl.innerText = "❌"; hasError = true; }
+
         } catch(err){
             console.error(err);
             clearInterval(interval);
